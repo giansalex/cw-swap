@@ -75,7 +75,6 @@ pub fn execute_swap(
         min_amount: msg.min_amount,
     };
 
-
     let transfer_msg: CosmosMsg = IbcMsg::Transfer {
         channel_id: trans_channel,
         amount: coin(transfer.amount.into(), transfer.denom.to_owned()),
