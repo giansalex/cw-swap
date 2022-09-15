@@ -6,7 +6,7 @@ use cw2::set_contract_version;
 use crate::error::ContractError;
 use crate::ibc_msg::SwapPacket;
 use crate::msg::{AdminResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SwapMsg};
-use crate::state::{State, STATE};
+use crate::state::{CHANNEL_DENOM, Config, CONFIG};
 use cw_utils::one_coin;
 
 // version info for migration info
@@ -18,13 +18,19 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let state = State {
+    let cfg = Config {
         owner: info.sender.clone(),
+        swap_contract: msg.swap_contract,
+        default_timeout: msg.default_timeout,
     };
-    STATE.save(deps.storage, &state)?;
+    CONFIG.save(deps.storage, &cfg)?;
+
+    for item in msg.allowed_list {
+        CHANNEL_DENOM.save(deps.storage, item.denom.as_str(), &item.channel)?;
+    }
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -47,15 +53,19 @@ pub fn execute(
 }
 
 pub fn execute_swap(
-    _deps: DepsMut,
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: SwapMsg,
     transfer: Coin,
 ) -> Result<Response, ContractError> {
-    // let state = STATE.load(deps.storage)?;
+    let trans_channel = CHANNEL_DENOM.load(deps.storage, transfer.denom.as_str())?;
+    let cfg = CONFIG.load(deps.storage)?;
 
-    let timeout_delta = 600u64;
+    let timeout_delta = match msg.timeout {
+        Some(t) => t,
+        None => cfg.default_timeout,
+    };
     let timeout = env.block.time.plus_seconds(timeout_delta);
     let packet = SwapPacket {
         sender: info.sender.to_string(),
@@ -65,17 +75,18 @@ pub fn execute_swap(
         min_amount: msg.min_amount,
     };
 
-    let swap_msg = IbcMsg::SendPacket {
-        channel_id: msg.channel,
-        data: to_binary(&packet)?,
+
+    let transfer_msg: CosmosMsg = IbcMsg::Transfer {
+        channel_id: trans_channel,
+        amount: coin(transfer.amount.into(), transfer.denom.to_owned()),
+        to_address: cfg.swap_contract,
         timeout: timeout.into(),
     }
     .into();
 
-    let transfer_msg: CosmosMsg = IbcMsg::Transfer {
-        channel_id: "channel-1".into(),
-        amount: coin(transfer.amount.into(), transfer.denom.to_owned()),
-        to_address: "".into(),
+    let swap_msg = IbcMsg::SendPacket {
+        channel_id: msg.channel,
+        data: to_binary(&packet)?,
         timeout: timeout.into(),
     }
     .into();
@@ -95,10 +106,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
-    let state = STATE.load(deps.storage)?;
+    let cfg = CONFIG.load(deps.storage)?;
 
     Ok(AdminResponse {
-        admin: state.owner.into(),
+        admin: cfg.owner.into(),
     })
 }
 
@@ -108,12 +119,20 @@ mod test {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info,
     };
+    use crate::msg::AllowedDenom;
 
     #[test]
     fn test_init() {
         let mut deps = mock_dependencies();
 
+        let osmo_denom = AllowedDenom {
+            denom: "ibc/AAAAA".into(),
+            channel: "channel-0".into(),
+        };
         let msg = InstantiateMsg {
+            swap_contract: "swap-addr".into(),
+            default_timeout: 100,
+            allowed_list: vec![osmo_denom],
         };
 
         let info = mock_info("anyone", &[]);
