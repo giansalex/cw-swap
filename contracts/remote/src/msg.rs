@@ -6,7 +6,7 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Transfer(TransferMsg),
+    Swap(SwapMsg),
 }
 
 #[cw_serde]
@@ -17,10 +17,10 @@ pub enum QueryMsg {
 }
 
 #[cw_serde]
-pub struct TransferMsg {
-    pub to: String,
-    pub amount: Uint128,
+pub struct SwapMsg {
+    pub channel: String,
     pub denom: String,
+    pub min_amount: Uint128,
 }
 
 // We define a custom struct for each query response
