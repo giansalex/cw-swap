@@ -59,7 +59,7 @@ pub fn execute_swap(
     msg: SwapMsg,
     transfer: Coin,
 ) -> Result<Response, ContractError> {
-    let trans_channel = CHANNEL_DENOM.load(deps.storage, transfer.denom.as_str())?;
+    let swap_channel = CHANNEL_DENOM.load(deps.storage, transfer.denom.as_str())?;
     let cfg = CONFIG.load(deps.storage)?;
 
     let timeout_delta = match msg.timeout {
@@ -75,9 +75,9 @@ pub fn execute_swap(
         min_amount: msg.min_amount,
         sequence: 1u128.into(), // get from IBC data or query channel next_sequence
     };
-
+    // TODO: validate whitelist transfer channels
     let transfer_msg: CosmosMsg = IbcMsg::Transfer {
-        channel_id: trans_channel,
+        channel_id: msg.channel,
         amount: coin(transfer.amount.into(), transfer.denom.to_owned()),
         to_address: cfg.swap_contract,
         timeout: timeout.into(),
@@ -85,7 +85,7 @@ pub fn execute_swap(
     .into();
 
     let swap_msg = IbcMsg::SendPacket {
-        channel_id: msg.channel,
+        channel_id: swap_channel,
         data: to_binary(&packet)?,
         timeout: timeout.into(),
     }
