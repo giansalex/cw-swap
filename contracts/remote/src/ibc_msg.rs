@@ -8,4 +8,6 @@ pub struct SwapPacket {
     pub denom: String,
     pub out_denom: String,
     pub min_amount: Uint128,
+    /// Transfer sequence
+    pub sequence: Uint128,
 }
