@@ -1,7 +1,8 @@
 use cosmwasm_std::{entry_point, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, from_binary};
 
 use crate::error::{ContractError, Never};
-use crate::state::{CHANNEL_INFO, ChannelInfo, Order, ORDERS};
+use crate::relay::{ack_fail, handle_ibc_receive};
+use crate::state::{CHANNEL_INFO, ChannelInfo};
 
 pub const IBC_VERSION: &str = "swap-1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
@@ -72,16 +73,18 @@ pub fn ibc_channel_close(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn ibc_packet_receive(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    let data: Order = from_binary(&msg.packet.data)?;
-    // TODO: verify ibc transfer to complete swap
-    // PATH /ibc/core/channel/v1/channels/{channel}/ports/{port}/packet_receipts/{sequence}
-    let k = (msg.packet.dest.channel_id.as_ref(), &data.sequence.u128());
-    ORDERS.save(deps.storage, k, &data)?;
+    let packet = msg.packet;
 
-    Ok(IbcReceiveResponse::new())
+    handle_ibc_receive(deps, env, &packet).or_else(|err| {
+        Ok(IbcReceiveResponse::new()
+            .set_ack(ack_fail(err.to_string()))
+            .add_attribute("action", "receive")
+            .add_attribute("success", "false")
+            .add_attribute("error", err.to_string()))
+    })
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

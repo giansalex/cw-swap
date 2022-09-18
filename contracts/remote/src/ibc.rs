@@ -66,7 +66,7 @@ pub fn ibc_channel_close(
     _env: Env,
     _channel: IbcChannelCloseMsg,
 ) -> Result<IbcBasicResponse, ContractError> {
-    panic!()
+    unimplemented!()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -75,7 +75,7 @@ pub fn ibc_packet_receive(
     _env: Env,
     _msg: IbcPacketReceiveMsg,
 ) -> Result<IbcReceiveResponse, Never> {
-    panic!()
+    unimplemented!()
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
