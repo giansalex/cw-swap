@@ -44,3 +44,32 @@ pub fn parse_token_out(
 
     Ok(amount.into())
 }
+
+#[cfg(test)]
+mod test {
+    use cosmwasm_std::attr;
+    use super::*;
+
+    #[test]
+    fn parse_token() {
+        let events = vec![
+            Event::new("execute").add_attributes(vec![
+                attr("_contract_address", "osmo1cguah4y2x3dfcey3jnleafpjl4q5fmway"),
+            ]),
+            Event::new("wasm").add_attributes(vec![
+                attr("_contract_address", "osmo1cguah4y2x3dfcey3jnleafpjl4q5fmway"),
+                attr("token_out_amount", "10000000"),
+            ]),
+        ];
+        let msg = SubMsgResponse {
+            events,
+            data: None,
+        };
+
+        parse_token_out(msg.clone(), "wasm", "abc").unwrap_err();
+        parse_token_out(msg.clone(), "execute", "_contract_address").unwrap_err();
+        let result = parse_token_out(msg, "wasm", "token_out").unwrap();
+
+        assert_eq!(Uint128::from(10000000u128), result);
+    }
+}
