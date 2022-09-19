@@ -1,7 +1,7 @@
 use cosmwasm_std::{Binary, DepsMut, Env, from_binary, IbcPacket, IbcReceiveResponse, to_binary};
 use crate::ContractError;
 use crate::ibc_msg::Ics20Ack;
-use crate::state::{Order, ORDERS};
+use crate::state::{CHANNEL_DENOM, Order, ORDERS};
 
 // create a serialized success message
 pub fn ack_success() -> Binary {
@@ -20,18 +20,25 @@ pub fn handle_ibc_receive(
     _env: Env,
     packet: &IbcPacket,
 ) -> Result<IbcReceiveResponse, ContractError> {
-    let data: Order = from_binary(&packet.data)?;
-    // TODO: verify ibc transfer to complete swap
-    // PATH /ibc/core/channel/v1/channels/{channel}/ports/{port}/packet_receipts/{sequence}
-    let k = (packet.dest.channel_id.as_ref(), data.sequence.u64());
-    ORDERS.save(deps.storage, k, &data)?;
+    let order: Order = from_binary(&packet.data)?;
+    // TODO: complete swap here? prev verify ibc transfer
+
+    if !CHANNEL_DENOM.has(deps.storage, &order.denom) {
+        return Err(ContractError::DenomNotAllowed {denom: order.denom});
+    }
+    if !CHANNEL_DENOM.has(deps.storage, &order.out_denom) {
+        return Err(ContractError::DenomNotAllowed {denom: order.out_denom});
+    }
+
+    let k = (packet.dest.channel_id.as_ref(), order.sequence.u64());
+    ORDERS.save(deps.storage, k, &order)?;
 
     let res = IbcReceiveResponse::new()
         .set_ack(ack_success())
         .add_attribute("action", "receive_swap")
-        .add_attribute("sender", data.sender)
-        .add_attribute("denom", data.denom)
-        .add_attribute("amount", data.amount)
+        .add_attribute("sender", order.sender)
+        .add_attribute("denom", order.denom)
+        .add_attribute("amount", order.amount)
         .add_attribute("success", "true");
 
     Ok(res)

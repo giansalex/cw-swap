@@ -79,7 +79,7 @@ pub fn execute_swap(
         min_amount: msg.min_amount,
         sequence: 1u64.into(), // get from IBC data or query channel next_sequence
     };
-    // TODO: validate whitelist transfer channels
+
     let transfer_msg: CosmosMsg = IbcMsg::Transfer {
         channel_id: transfer_channel,
         amount: coin(transfer.amount.into(), transfer.denom.to_owned()),

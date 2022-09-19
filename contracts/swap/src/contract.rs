@@ -91,6 +91,8 @@ pub fn execute_complete_swap(
         return Err(ContractError::ChannelNotFound {});
     }
 
+    // TODO: verify ibc transfer to complete swap
+    // PATH /ibc/core/channel/v1/channels/{channel}/ports/{port}/packet_receipts/{sequence}
     let k = (msg.channel.as_str(), msg.sequence.u64());
     let order = ORDERS.load(deps.storage, k).map_err(|_| ContractError::OrderNotFound {})?;
     let state = STATE.load(deps.storage)?;

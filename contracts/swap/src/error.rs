@@ -31,4 +31,7 @@ pub enum ContractError {
 
     #[error("Invalid amount")]
     InvalidAmountValue {},
+
+    #[error("Denom not allowed: {denom}")]
+    DenomNotAllowed { denom: String },
 }
