@@ -6,6 +6,7 @@ use cw_storage_plus::{Item, Map};
 #[cw_serde]
 pub struct State {
     pub owner: Addr,
+    pub swap_router: String,
 }
 
 #[cw_serde]
