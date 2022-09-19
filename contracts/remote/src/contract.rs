@@ -73,7 +73,7 @@ pub fn execute_swap(
         denom: transfer.denom.to_owned(),
         out_denom: msg.denom,
         min_amount: msg.min_amount,
-        sequence: 1u128.into(), // get from IBC data or query channel next_sequence
+        sequence: 1u64.into(), // get from IBC data or query channel next_sequence
     };
     // TODO: validate whitelist transfer channels
     let transfer_msg: CosmosMsg = IbcMsg::Transfer {

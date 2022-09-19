@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, Uint128};
+use cosmwasm_std::{Addr, Coin, Uint128, Uint64};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 #[cw_serde]
@@ -21,7 +21,7 @@ pub enum QueryMsg {
 #[cw_serde]
 pub struct SwapMsg {
     pub channel: String,
-    pub sequence: Uint128,
+    pub sequence: Uint64,
 }
 
 // We define a custom struct for each query response

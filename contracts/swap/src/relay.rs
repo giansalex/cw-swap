@@ -23,7 +23,7 @@ pub fn handle_ibc_receive(
     let data: Order = from_binary(&packet.data)?;
     // TODO: verify ibc transfer to complete swap
     // PATH /ibc/core/channel/v1/channels/{channel}/ports/{port}/packet_receipts/{sequence}
-    let k = (packet.dest.channel_id.as_ref(), data.sequence.u128());
+    let k = (packet.dest.channel_id.as_ref(), data.sequence.u64());
     ORDERS.save(deps.storage, k, &data)?;
 
     let res = IbcReceiveResponse::new()

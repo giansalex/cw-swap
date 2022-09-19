@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 
-use cosmwasm_std::{Addr, IbcEndpoint, Uint128};
+use cosmwasm_std::{Addr, IbcEndpoint, Uint128, Uint64};
 use cw_storage_plus::{Item, Map};
 
 #[cw_serde]
@@ -27,9 +27,9 @@ pub struct Order {
     pub out_denom: String,
     pub min_amount: Uint128,
     /// Transfer sequence
-    pub sequence: Uint128,
+    pub sequence: Uint64,
 }
 
 pub const STATE: Item<State> = Item::new("state");
 pub const CHANNEL_INFO: Map<&str, ChannelInfo> = Map::new("channel_info");
-pub const ORDERS: Map<(&str, u128), Order> = Map::new("swap_orders");
+pub const ORDERS: Map<(&str, u64), Order> = Map::new("swap_orders");

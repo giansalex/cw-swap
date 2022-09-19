@@ -59,7 +59,7 @@ pub fn execute_complete_swap(
         return Err(ContractError::ChannelNotFound {});
     }
 
-    let k = (msg.channel.as_str(), msg.sequence.u128());
+    let k = (msg.channel.as_str(), msg.sequence.u64());
     let order = ORDERS.load(deps.storage, k).map_err(|_| ContractError::OrderNotFound {})?;
     let state = STATE.load(deps.storage)?;
 
