@@ -1,7 +1,7 @@
-use cosmwasm_std::{Binary, DepsMut, Env, from_binary, IbcPacket, IbcReceiveResponse, to_binary};
-use crate::ContractError;
 use crate::ibc_msg::Ics20Ack;
-use crate::state::{CHANNEL_DENOM, Order, ORDERS};
+use crate::state::{Order, CHANNEL_DENOM, ORDERS};
+use crate::ContractError;
+use cosmwasm_std::{from_binary, to_binary, Binary, DepsMut, Env, IbcPacket, IbcReceiveResponse};
 
 // create a serialized success message
 pub fn ack_success() -> Binary {
@@ -24,10 +24,12 @@ pub fn handle_ibc_receive(
     // TODO: complete swap here? prev verify ibc transfer
 
     if !CHANNEL_DENOM.has(deps.storage, &order.denom) {
-        return Err(ContractError::DenomNotAllowed {denom: order.denom});
+        return Err(ContractError::DenomNotAllowed { denom: order.denom });
     }
     if !CHANNEL_DENOM.has(deps.storage, &order.out_denom) {
-        return Err(ContractError::DenomNotAllowed {denom: order.out_denom});
+        return Err(ContractError::DenomNotAllowed {
+            denom: order.out_denom,
+        });
     }
 
     let k = (packet.dest.channel_id.as_ref(), order.sequence.u64());

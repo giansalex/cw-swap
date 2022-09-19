@@ -1,12 +1,17 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{coins, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg, coin, Reply, SubMsg, SubMsgResult, IbcMsg};
+use cosmwasm_std::{
+    coin, coins, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Reply,
+    Response, StdResult, SubMsg, SubMsgResult, WasmMsg,
+};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{AdminResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SwapMsg, SwapRouterMsg};
 use crate::parse::parse_token_out;
-use crate::state::{CHANNEL_DENOM, CHANNEL_INFO, MsgReplyState, ORDERS, REPLY_STATES, State, STATE};
+use crate::state::{
+    MsgReplyState, State, CHANNEL_DENOM, CHANNEL_INFO, ORDERS, REPLY_STATES, STATE,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-swap";
@@ -26,9 +31,7 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
 
             coin(token_out.into(), order.out_denom)
         }
-        SubMsgResult::Err(_) => {
-            coin(order.amount.into(), order.denom)
-        }
+        SubMsgResult::Err(_) => coin(order.amount.into(), order.denom),
     };
     let channel_id = CHANNEL_DENOM.load(deps.storage, amount.denom.as_str())?;
     let state = STATE.load(deps.storage)?;
@@ -72,19 +75,15 @@ pub fn instantiate(
 pub fn execute(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::CompleteSwap(swap) => execute_complete_swap(deps, info, swap),
+        ExecuteMsg::CompleteSwap(swap) => execute_complete_swap(deps, swap),
     }
 }
 
-pub fn execute_complete_swap(
-    deps: DepsMut,
-    _info: MessageInfo,
-    msg: SwapMsg,
-) -> Result<Response, ContractError> {
+pub fn execute_complete_swap(deps: DepsMut, msg: SwapMsg) -> Result<Response, ContractError> {
     // TODO: validate user address
 
     if !CHANNEL_INFO.has(deps.storage, msg.channel.as_str()) {
@@ -94,7 +93,9 @@ pub fn execute_complete_swap(
     // TODO: verify ibc transfer to complete swap
     // PATH /ibc/core/channel/v1/channels/{channel}/ports/{port}/packet_receipts/{sequence}
     let k = (msg.channel.as_str(), msg.sequence.u64());
-    let order = ORDERS.load(deps.storage, k).map_err(|_| ContractError::OrderNotFound {})?;
+    let order = ORDERS
+        .load(deps.storage, k)
+        .map_err(|_| ContractError::OrderNotFound {})?;
     let state = STATE.load(deps.storage)?;
 
     let data = SwapRouterMsg::Swap {
@@ -105,12 +106,17 @@ pub fn execute_complete_swap(
     let swap_msg: CosmosMsg = WasmMsg::Execute {
         contract_addr: state.swap_router,
         msg: to_binary(&data)?,
-        funds: coins(order.amount.u128(), order.denom)
-    }.into();
+        funds: coins(order.amount.u128(), order.denom),
+    }
+    .into();
 
-    REPLY_STATES.save(deps.storage, msg.sequence.u64(), &MsgReplyState{
-        channel: msg.channel,
-    })?;
+    REPLY_STATES.save(
+        deps.storage,
+        msg.sequence.u64(),
+        &MsgReplyState {
+            channel: msg.channel,
+        },
+    )?;
     let submsg = SubMsg::reply_always(swap_msg, msg.sequence.u64());
     Ok(Response::new()
         .add_submessage(submsg)
@@ -134,11 +140,9 @@ fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
 
 #[cfg(test)]
 mod test {
-    use cosmwasm_std::Api;
     use super::*;
-    use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_info,
-    };
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::Api;
 
     #[test]
     fn test_init() {

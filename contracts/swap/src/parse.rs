@@ -1,5 +1,5 @@
-use cosmwasm_std::{Attribute, Event, SubMsgResponse, Uint128};
 use crate::ContractError;
+use cosmwasm_std::{Attribute, Event, SubMsgResponse, Uint128};
 
 pub fn find_event_type(events: Vec<Event>, key: &str) -> Option<Event> {
     for ev in events {

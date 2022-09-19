@@ -18,7 +18,6 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
     // Add any other custom errors you like here.
-
     #[error("Only supports channel with ibc version ics20-1, got {version}")]
     InvalidIbcVersion { version: String },
 

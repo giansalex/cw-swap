@@ -13,7 +13,6 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
     // Add any other custom errors you like here.
-
     #[error("Channel not found")]
     ChannelNotFound {},
 

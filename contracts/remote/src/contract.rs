@@ -1,12 +1,15 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, IbcMsg, coin, Coin};
+use cosmwasm_std::{
+    coin, to_binary, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Response,
+    StdResult,
+};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::ibc_msg::SwapPacket;
 use crate::msg::{AdminResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SwapMsg};
-use crate::state::{CHANNEL_DENOM, CHANNEL_INFO, Config, CONFIG};
+use crate::state::{Config, CHANNEL_DENOM, CHANNEL_INFO, CONFIG};
 use cw_utils::one_coin;
 
 // version info for migration info
@@ -48,7 +51,7 @@ pub fn execute(
         ExecuteMsg::Swap(swap) => {
             let transfer = one_coin(&info)?;
             execute_swap(deps, env, info, swap, transfer)
-        },
+        }
     }
 }
 
@@ -121,10 +124,8 @@ fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_info,
-    };
     use crate::msg::AllowedDenom;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 
     #[test]
     fn test_init() {

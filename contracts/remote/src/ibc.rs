@@ -1,7 +1,11 @@
-use cosmwasm_std::{entry_point, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse};
+use cosmwasm_std::{
+    entry_point, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse,
+};
 
 use crate::error::{ContractError, Never};
-use crate::state::{CHANNEL_INFO, ChannelInfo};
+use crate::state::{ChannelInfo, CHANNEL_INFO};
 
 pub const IBC_VERSION: &str = "swap-1";
 pub const IBC_ORDERING: IbcOrder = IbcOrder::Unordered;
