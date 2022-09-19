@@ -31,4 +31,4 @@ pub struct Order {
 
 pub const STATE: Item<State> = Item::new("state");
 pub const CHANNEL_INFO: Map<&str, ChannelInfo> = Map::new("channel_info");
-pub const ORDERS: Map<(&str, &u128), Order> = Map::new("swap_orders");
+pub const ORDERS: Map<(&str, u128), Order> = Map::new("swap_orders");
