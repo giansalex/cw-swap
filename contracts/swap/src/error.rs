@@ -25,4 +25,10 @@ pub enum ContractError {
 
     #[error("Only supports unordered channel")]
     OnlyOrderedChannel {},
+
+    #[error("Token reply result not found")]
+    TokenResultNotFound {},
+
+    #[error("Invalid amount")]
+    InvalidAmountValue {},
 }

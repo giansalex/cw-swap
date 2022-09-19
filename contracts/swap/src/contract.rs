@@ -1,20 +1,46 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{coins, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg, coin, Reply, SubMsg};
+use cosmwasm_std::{coins, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg, coin, Reply, SubMsg, SubMsgResult, IbcMsg};
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{AdminResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SwapMsg, SwapRouterMsg};
-use crate::state::{CHANNEL_INFO, ORDERS, State, STATE};
+use crate::parse::parse_token_out;
+use crate::state::{CHANNEL_DENOM, CHANNEL_INFO, MsgReplyState, ORDERS, REPLY_STATES, State, STATE};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-swap";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-const SWAP_ID: u64 = 0x1237;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(_deps: DepsMut, _env: Env, _reply: Reply) -> Result<Response, ContractError> {
-    Ok(Response::new())
+pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, ContractError> {
+    let reply_state = REPLY_STATES.load(deps.storage, reply.id)?;
+    let k = (reply_state.channel.as_str(), reply.id);
+    let order = ORDERS.load(deps.storage, k)?;
+    REPLY_STATES.remove(deps.storage, reply.id);
+    ORDERS.remove(deps.storage, k);
+
+    let amount = match reply.result {
+        SubMsgResult::Ok(msg) => {
+            let token_out = parse_token_out(msg, "wasm", "token_out_amount")?;
+
+            coin(token_out.into(), order.out_denom)
+        }
+        SubMsgResult::Err(_) => {
+            coin(order.amount.into(), order.denom)
+        }
+    };
+    let channel_id = CHANNEL_DENOM.load(deps.storage, amount.denom.as_str())?;
+    let timeout = env.block.time.plus_seconds(10u64);
+    let transfer_msg: CosmosMsg = IbcMsg::Transfer {
+        channel_id,
+        amount,
+        to_address: order.sender,
+        timeout: timeout.into(),
+    }
+    .into();
+
+    Ok(Response::new().add_message(transfer_msg))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -74,7 +100,10 @@ pub fn execute_complete_swap(
         funds: coins(order.amount.u128(), order.denom)
     }.into();
 
-    let submsg = SubMsg::reply_always(swap_msg, SWAP_ID);
+    REPLY_STATES.save(deps.storage, msg.sequence.u64(), &MsgReplyState{
+        channel: msg.channel,
+    })?;
+    let submsg = SubMsg::reply_always(swap_msg, msg.sequence.u64());
     Ok(Response::new()
         .add_submessage(submsg)
         .add_attribute("method", "complete_swap"))

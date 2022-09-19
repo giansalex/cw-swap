@@ -30,6 +30,13 @@ pub struct Order {
     pub sequence: Uint64,
 }
 
+#[cw_serde]
+pub struct MsgReplyState {
+    pub channel: String,
+}
+
 pub const STATE: Item<State> = Item::new("state");
 pub const CHANNEL_INFO: Map<&str, ChannelInfo> = Map::new("channel_info");
 pub const ORDERS: Map<(&str, u64), Order> = Map::new("swap_orders");
+pub const REPLY_STATES: Map<u64, MsgReplyState> = Map::new("reply_states");
+pub const CHANNEL_DENOM: Map<&str, String> = Map::new("channel_denom");
