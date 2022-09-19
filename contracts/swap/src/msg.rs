@@ -4,6 +4,8 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 #[cw_serde]
 pub struct InstantiateMsg {
     pub swap_router: Addr,
+    pub transfer_timeout: u64,
+    pub allowed_list: Vec<AllowedDenom>,
 }
 
 #[cw_serde]
@@ -37,4 +39,10 @@ pub enum SwapRouterMsg {
         output_denom: String,
         minimum_output_amount: Uint128,
     },
+}
+
+#[cw_serde]
+pub struct AllowedDenom {
+    pub denom: String,
+    pub channel: String,
 }

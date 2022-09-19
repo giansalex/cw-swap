@@ -7,6 +7,7 @@ use cw_storage_plus::{Item, Map};
 pub struct State {
     pub owner: Addr,
     pub swap_router: String,
+    pub transfer_timeout: u64,
 }
 
 #[cw_serde]

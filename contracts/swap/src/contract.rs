@@ -31,7 +31,8 @@ pub fn reply(deps: DepsMut, env: Env, reply: Reply) -> Result<Response, Contract
         }
     };
     let channel_id = CHANNEL_DENOM.load(deps.storage, amount.denom.as_str())?;
-    let timeout = env.block.time.plus_seconds(10u64);
+    let state = STATE.load(deps.storage)?;
+    let timeout = env.block.time.plus_seconds(state.transfer_timeout);
     let transfer_msg: CosmosMsg = IbcMsg::Transfer {
         channel_id,
         amount,
@@ -54,8 +55,13 @@ pub fn instantiate(
     let state = State {
         owner: info.sender.clone(),
         swap_router: msg.swap_router.to_string(),
+        transfer_timeout: msg.transfer_timeout,
     };
     STATE.save(deps.storage, &state)?;
+
+    for item in msg.allowed_list {
+        CHANNEL_DENOM.save(deps.storage, item.denom.as_str(), &item.channel)?;
+    }
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
@@ -138,6 +144,8 @@ mod test {
 
         let msg = InstantiateMsg {
             swap_router: deps.api.addr_validate("swap-router-addr").unwrap(),
+            transfer_timeout: 100u64,
+            allowed_list: vec![],
         };
 
         let info = mock_info("anyone", &[]);

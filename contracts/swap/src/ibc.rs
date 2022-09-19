@@ -107,8 +107,6 @@ pub fn ibc_packet_timeout(
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
     #[test]
     fn receive() {
         println!("Hi");
