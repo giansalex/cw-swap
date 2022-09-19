@@ -6,7 +6,7 @@ use cw2::set_contract_version;
 use crate::error::ContractError;
 use crate::ibc_msg::SwapPacket;
 use crate::msg::{AdminResponse, ExecuteMsg, InstantiateMsg, QueryMsg, SwapMsg};
-use crate::state::{CHANNEL_DENOM, Config, CONFIG};
+use crate::state::{CHANNEL_DENOM, CHANNEL_INFO, Config, CONFIG};
 use cw_utils::one_coin;
 
 // version info for migration info
@@ -59,7 +59,11 @@ pub fn execute_swap(
     msg: SwapMsg,
     transfer: Coin,
 ) -> Result<Response, ContractError> {
-    let swap_channel = CHANNEL_DENOM.load(deps.storage, transfer.denom.as_str())?;
+    if CHANNEL_INFO.has(deps.storage, &msg.channel) {
+        return Err(ContractError::NoSuchChannel { id: msg.channel });
+    }
+
+    let transfer_channel = CHANNEL_DENOM.load(deps.storage, transfer.denom.as_str())?;
     let cfg = CONFIG.load(deps.storage)?;
 
     let timeout_delta = match msg.timeout {
@@ -77,7 +81,7 @@ pub fn execute_swap(
     };
     // TODO: validate whitelist transfer channels
     let transfer_msg: CosmosMsg = IbcMsg::Transfer {
-        channel_id: msg.channel,
+        channel_id: transfer_channel,
         amount: coin(transfer.amount.into(), transfer.denom.to_owned()),
         to_address: cfg.swap_contract,
         timeout: timeout.into(),
@@ -85,7 +89,7 @@ pub fn execute_swap(
     .into();
 
     let swap_msg = IbcMsg::SendPacket {
-        channel_id: swap_channel,
+        channel_id: msg.channel,
         data: to_binary(&packet)?,
         timeout: timeout.into(),
     }

@@ -24,4 +24,7 @@ pub enum ContractError {
 
     #[error("Only supports unordered channel")]
     OnlyOrderedChannel {},
+
+    #[error("Channel doesn't exist: {id}")]
+    NoSuchChannel { id: String },
 }
