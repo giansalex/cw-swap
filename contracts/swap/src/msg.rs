@@ -22,7 +22,9 @@ pub enum QueryMsg {
 
 #[cw_serde]
 pub struct SwapMsg {
+    /// swap IBC channel
     pub channel: String,
+    /// swap IBC sequence
     pub sequence: Uint64,
 }
 

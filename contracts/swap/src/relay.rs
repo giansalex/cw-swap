@@ -32,13 +32,14 @@ pub fn handle_ibc_receive(
         });
     }
 
-    let k = (packet.dest.channel_id.as_ref(), order.sequence.u64());
+    let k = (packet.dest.channel_id.as_ref(), packet.sequence);
     ORDERS.save(deps.storage, k, &order)?;
 
     let res = IbcReceiveResponse::new()
         .set_ack(ack_success())
         .add_attribute("action", "receive_swap")
         .add_attribute("sender", order.sender)
+        .add_attribute("sequence", order.sequence)
         .add_attribute("denom", order.denom)
         .add_attribute("amount", order.amount)
         .add_attribute("success", "true");
