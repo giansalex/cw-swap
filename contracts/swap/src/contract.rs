@@ -55,9 +55,10 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    let swap_router_addr =deps.api.addr_validate(&msg.swap_router)?;
     let state = State {
         owner: info.sender.clone(),
-        swap_router: msg.swap_router.to_string(),
+        swap_router: swap_router_addr.to_string(),
         transfer_timeout: msg.transfer_timeout,
     };
     STATE.save(deps.storage, &state)?;
@@ -144,14 +145,13 @@ fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
 mod test {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::Api;
 
     #[test]
     fn test_init() {
         let mut deps = mock_dependencies();
 
         let msg = InstantiateMsg {
-            swap_router: deps.api.addr_validate("swap-router-addr").unwrap(),
+            swap_router: "swap-router-addr".to_string(),
             transfer_timeout: 100u64,
             allowed_list: vec![],
         };

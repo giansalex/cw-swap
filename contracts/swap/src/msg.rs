@@ -1,9 +1,9 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Coin, Uint128, Uint64};
+use cosmwasm_std::{Coin, Uint128, Uint64};
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub swap_router: Addr,
+    pub swap_router: String,
     pub transfer_timeout: u64,
     pub allowed_list: Vec<AllowedDenom>,
 }

@@ -33,4 +33,7 @@ pub enum ContractError {
 
     #[error("Denom not allowed: {denom}")]
     DenomNotAllowed { denom: String },
+
+    #[error("Swap in progress")]
+    SwapPending {},
 }
